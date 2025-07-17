@@ -1,11 +1,3 @@
-1. Download all data into the "data" folder.
-2. "create_tensor.py" to 
-- build a 5D tensor from all the data,
-- save it as "tensor.npy" and,
-- save the label‐to‐index mappings (feature, modality, cell, time, sample) as "mappings.pkl".
-3. "read_tensor_shape.py" to print out the tensor's shape, which is (614, 2, 974, 195, 8).
-4. "plot_tensor.py" to visualize selected tensor samples and save the resulting figures in the "plots" folder.
-5."tensor_to_json.py" to convert each tensor sample into JSON and output it as "gene_expressions.json".
-6. Since "gene_expressions.json" is too large (3.21GB) and cannot be opened directly, write "read_json.py" using "ijson" library to stream and inspect its contents.
-
-
+1. The `create_tensor.py` file creates a tensor from raw data (cells’ protein and promoter gene expression rates over time).
+2. The `create_json.py` file combines raw and additional data (cells’ surface area, volume, and contacting area with neighbors) and outputs them to JSON files.
+3. The `plot_json.py` file visualizes how the five modalities: `surface_area`, `volume`, `contacting_area`, `proteins` and `promoters` vary over time.
