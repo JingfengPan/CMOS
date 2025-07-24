@@ -32,8 +32,23 @@ def load_lineage_trees():
     
     return parent_dict, children_dict
 
+# Load cell fate data
+def load_cell_fate_data():
+    df = pd.read_csv('data/Cell Fate.csv')
+    cell_fate_dict = {}
+    for _, row in df.iterrows():
+        cell_name = str(row['Cell identity']).strip("'")  # Remove single quotes
+        cell_lineage = str(row['Cell lineage']).strip("'")  # Remove single quotes
+        cell_fate = str(row['Cell fate']).strip("'")  # Remove single quotes
+        cell_fate_dict[cell_name] = {
+            'cell_lineage': cell_lineage,
+            'cell_fate': cell_fate
+        }
+    return cell_fate_dict
+
 name_dict = load_name_dict()
 parent_dict, children_dict = load_lineage_trees()
+cell_fate_dict = load_cell_fate_data()
 
 for sample_num in range(1, 9):
     print(f"\nProcessing sample {sample_num}...")
@@ -100,7 +115,7 @@ for sample_num in range(1, 9):
         
         # Get parent and children for this cell
         parent = parent_dict.get(cell, None)
-        children = children_dict.get(cell, [])
+        potential_children = children_dict.get(cell, [])
         
         # Get birth and death times for this cell
         birth_time = None
@@ -111,6 +126,13 @@ for sample_num in range(1, 9):
         
         for t in sample_time_points:
             t_str = str(t)
+            
+            # Filter children to only include those that have been born by this time point
+            # (even if they are now dead or divided)
+            born_children = []
+            for child in potential_children:
+                if child in cell_lifecycles and cell_lifecycles[child][0] <= t:
+                    born_children.append(child)
             
             # Determine lifecycle state
             if birth_time is None or t < birth_time:
@@ -160,9 +182,9 @@ for sample_num in range(1, 9):
                                 promoters[gene_name] = float(rate)
             else:
                 # Cell is dead or divided
-                if children:  # Has children, so it divided
+                if born_children:  # Has born children, so it divided
                     lifecycle = "divided"
-                else:  # No children, so it died
+                else:  # No born children, so it died
                     lifecycle = "dead"
                 
                 age = None
@@ -173,11 +195,18 @@ for sample_num in range(1, 9):
                 proteins = {}
                 promoters = {}
 
+            # Get cell lineage and fate information
+            cell_fate_info = cell_fate_dict.get(cell, {})
+            cell_lineage = cell_fate_info.get('cell_lineage', None)
+            cell_fate = cell_fate_info.get('cell_fate', None)
+            
             output[cell][t_str] = {
                 "lifecycle": lifecycle,
                 "age": int(age) if age is not None else None,
                 "parent": parent,
-                "children": children,
+                "children": born_children,
+                "cell_lineage": cell_lineage,
+                "cell_fate": cell_fate,
                 "proteins": proteins,
                 "promoters": promoters,
                 "surface_area": float(surface) if surface is not None else None,

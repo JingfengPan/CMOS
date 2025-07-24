@@ -23,8 +23,23 @@ def load_lineage_trees():
     
     return parent_dict
 
+# Load cell fate data
+def load_cell_fate_data():
+    df = pd.read_csv('data/Cell Fate.csv')
+    cell_fate_dict = {}
+    for _, row in df.iterrows():
+        cell_name = str(row['Cell identity']).strip("'")  # Remove single quotes
+        cell_lineage = str(row['Cell lineage']).strip("'")  # Remove single quotes
+        cell_fate = str(row['Cell fate']).strip("'")  # Remove single quotes
+        cell_fate_dict[cell_name] = {
+            'cell_lineage': cell_lineage,
+            'cell_fate': cell_fate
+        }
+    return cell_fate_dict
+
 name_dict = load_name_dict()
 parent_dict = load_lineage_trees()
+cell_fate_dict = load_cell_fate_data()
 
 for sample_num in range(1, 9):
     print(f"\nProcessing sample {sample_num}...")
@@ -112,11 +127,17 @@ for sample_num in range(1, 9):
                         elif modality == 'Promoter':
                             promoters[gene_name] = float(rate)
 
+            # Get cell lineage and fate information
+            cell_fate_info = cell_fate_dict.get(cell, {})
+            cell_lineage = cell_fate_info.get('cell_lineage', None)
+            cell_fate = cell_fate_info.get('cell_fate', None)
+            
             output[cell][t_str] = {
                 "lifecycle": "alive",
                 "age": age,
                 "parent": parent,
-
+                "cell_lineage": cell_lineage,
+                "cell_fate": cell_fate,
                 "proteins": proteins,
                 "promoters": promoters,
                 "surface_area": surface,
